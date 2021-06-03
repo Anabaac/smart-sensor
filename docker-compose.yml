@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+  influxdb:
+    image: influxdb:1.8
+    volumes:
+      - ./influxdb:/var/lib/influxdb
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=grafana
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=admin
+    networks:
+      - node-red-net
+  grafana:
+    user: root
+    image: grafana/grafana
+    volumes:
+      - ./grafana:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - HTTP_USER=admin
+      - HTTP_PASS=admin
+      - INFLUXDB_HOST=influxdb
+      - INFLUXDB_PORT=8086
+      - INFLUXDB_NAME=grafana
+      - INFLUXDB_USER=admin
+      - INFLUXDB_PASS=admin
+    depends_on:
+      - influxdb
+    networks:
+      - node-red-net
+
+  node-red:
+    image: nodered/node-red:latest
+    restart: unless-stopped
+    environment:
+    - TZ=Europe/London
+    networks:
+    - node-red-net
+    ports:
+    - "1880:1880"
+    volumes:
+    - node-red-data:/data
+      
+  MQTTbroker:
+    image: eclipse-mosquitto:1.6.13
+    restart: unless-stopped
+    networks:
+    - node-red-net
+      
+volumes:
+    node-red-data:
+      
+networks:
+    node-red-net:
